@@ -6,5 +6,13 @@
     "build": "npm --prefix client run build",
     "start": "node server/dist/index.js",
     "dev": "bash scripts/dev.sh"
+  },
+  "devDependencies": {
+    "prisma": "^6.13.0"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.13.0",
+    "@types/bcryptjs": "^2.4.6",
+    "bcryptjs": "^3.0.2"
   }
 }

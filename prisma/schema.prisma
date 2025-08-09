@@ -1,0 +1,139 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  passwordHash  String
+  displayName   String
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  roles         UserRole[]
+  featureFlags  FeatureFlag[]
+  posts         Post[]    @relation("PostAuthor")
+  files         File[]
+  wikiPages     WikiPage[]
+  vorgesprPages VorgesprPage[]
+}
+
+model Role {
+  id    Int     @id @default(autoincrement())
+  name  String  @unique // ADMIN | EDITOR | CONTRIBUTOR | READER
+  users UserRole[]
+}
+
+model UserRole {
+  userId String
+  roleId Int
+  user   User @relation(fields: [userId], references: [id])
+  role   Role @relation(fields: [roleId], references: [id])
+  @@id([userId, roleId])
+}
+
+model FeatureFlag {
+  id      String  @id @default(cuid())
+  user    User    @relation(fields: [userId], references: [id])
+  userId  String
+  key     String
+  enabled Boolean @default(false)
+  @@unique([userId, key])
+}
+
+model Post {
+  id           String   @id @default(cuid())
+  author       User     @relation("PostAuthor", fields: [authorId], references: [id])
+  authorId     String
+  title        String
+  body         String
+  url          String?
+  pinned       Boolean  @default(false)
+  status       String   @default("published") // draft|published
+  publishedAt  DateTime @default(now())
+}
+
+model File {
+  id           String   @id @default(cuid())
+  uploader     User     @relation(fields: [uploaderId], references: [id])
+  uploaderId   String
+  filename     String
+  storagePath  String
+  mime         String
+  size         Int
+  title        String
+  description  String?
+  tags         Json?
+  version      Int      @default(1)
+  isPublicTo   Json?
+  createdAt    DateTime @default(now())
+}
+
+model WikiPage {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  title     String
+  content   String   // markdown
+  author    User     @relation(fields: [authorId], references: [id])
+  authorId  String
+  status    String   @default("published")
+  updatedAt DateTime @updatedAt
+  assets    WikiAsset[]
+}
+
+model WikiAsset {
+  id         String   @id @default(cuid())
+  page       WikiPage @relation(fields: [pageId], references: [id])
+  pageId     String
+  storagePath String
+  filename    String
+  mime        String
+  size        Int
+  description String?
+}
+
+model VorgesprPage {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  title     String
+  content   String   // markdown
+  author    User     @relation(fields: [authorId], references: [id])
+  authorId  String
+  status    String   @default("published")
+  updatedAt DateTime @updatedAt
+  assets    VorgesprAsset[]
+}
+
+model VorgesprAsset {
+  id          String        @id @default(cuid())
+  page        VorgesprPage  @relation(fields: [pageId], references: [id])
+  pageId      String
+  storagePath String?
+  filename    String?
+  mime        String?
+  size        Int?
+  description String?
+  videoUrl    String? // YouTube/Video-Link
+}
+
+model Notebook {
+  id           String   @id @default(cuid())
+  title        String
+  externalUrl  String
+  description  String?
+  allowedRoles Json?
+  allowedUsers Json?
+}
+
+model AuditLog {
+  id       String   @id @default(cuid())
+  actorId  String?
+  action   String
+  subject  String?
+  meta     Json?
+  createdAt DateTime @default(now())
+}
